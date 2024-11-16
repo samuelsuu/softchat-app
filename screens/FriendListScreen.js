@@ -1,89 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { supabase } from '../api/supabaseClient'; // Import Supabase client
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import friends from '../dummyData/Friends'; // Import friends data
 
 const FriendListScreen = () => {
-  const [friends, setFriends] = useState([]);
+  const [friendsList, setFriendsList] = useState(friends); // Use the dummy friends data
   const [loading, setLoading] = useState(false);
 
-  // Fetch profiles and follow information on mount
   useEffect(() => {
-    fetchFriends();
+    setLoading(false);
   }, []);
 
-  const fetchFriends = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert("User not logged in.");
-        return;
-      }
-      
-      const { data: friendsData, error } = await supabase
-        .from('profiles')
-        .select('id, username');
-
-      if (error) throw error;
-
-      const { data: followsData } = await supabase
-        .from('follows')
-        .select('followed_id')
-        .eq('follower_id', user.id);
-
-      const followedIds = followsData.map((follow) => follow.followed_id);
-
-      const friendsWithFollowStatus = friendsData.map((friend) => ({
-        ...friend,
-        isFollowing: followedIds.includes(friend.id),
-      }));
-
-      setFriends(friendsWithFollowStatus);
-    } catch (error) {
-      Alert.alert("Error fetching friends:", error.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleFollow = (friendId) => {
+    setFriendsList((prevFriends) =>
+      prevFriends.map((friend) =>
+        friend.id === friendId ? { ...friend, isFollowing: true } : friend
+      )
+    );
   };
 
-  const handleFollow = async (friendId) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from('follows')
-        .insert([{ follower_id: user.id, followed_id: friendId }]);
-
-      if (error) throw error;
-
-      setFriends((prevFriends) =>
-        prevFriends.map((friend) =>
-          friend.id === friendId ? { ...friend, isFollowing: true } : friend
-        )
-      );
-    } catch (error) {
-      Alert.alert("Error following user:", error.message);
-    }
-  };
-
-  const handleUnfollow = async (friendId) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from('follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('followed_id', friendId);
-
-      if (error) throw error;
-
-      setFriends((prevFriends) =>
-        prevFriends.map((friend) =>
-          friend.id === friendId ? { ...friend, isFollowing: false } : friend
-        )
-      );
-    } catch (error) {
-      Alert.alert("Error unfollowing user:", error.message);
-    }
+  const handleUnfollow = (friendId) => {
+    setFriendsList((prevFriends) =>
+      prevFriends.map((friend) =>
+        friend.id === friendId ? { ...friend, isFollowing: false } : friend
+      )
+    );
   };
 
   const toggleFollow = (friendId, isFollowing) => {
@@ -96,24 +36,35 @@ const FriendListScreen = () => {
 
   const renderFriendItem = ({ item }) => (
     <View style={styles.friendContainer}>
-      <Text style={styles.friendName}>{item.username}</Text>
-      <TouchableOpacity
-        style={[styles.followButton, item.isFollowing ? styles.unfollowButton : styles.follow]}
-        onPress={() => toggleFollow(item.id, item.isFollowing)}
-      >
-        <Text style={styles.buttonText}>{item.isFollowing ? 'Unfollow' : 'Follow'}</Text>
-      </TouchableOpacity>
+      <Image source={{ uri: item.profilePic }} style={styles.profilePic} />
+      <View style={styles.friendInfo}>
+        <Text style={styles.friendName}>{item.username}</Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.followButton, item.isFollowing ? styles.unfollowButton : styles.follow]}
+            onPress={() => toggleFollow(item.id, item.isFollowing)}
+          >
+            <Text style={styles.buttonText}>{item.isFollowing ? 'Unfollow' : 'Follow'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.chatButton}>
+            <Text style={styles.buttonText}>Chat</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Friend List</Text>
-      {loading ? <Text>Loading...</Text> : (
+      {loading ? (
+        <ActivityIndicator size="large" color="#457b9d" />
+      ) : (
         <FlatList
-          data={friends}
-          keyExtractor={(item) => item.id}
+          data={friendsList}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={renderFriendItem}
+          contentContainerStyle={styles.listContainer}
         />
       )}
     </View>
@@ -129,32 +80,67 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontWeight: '700',
+    marginBottom: 20,
     color: '#333',
+    textAlign: 'center',
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
   friendContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5, // For Android shadow
+  },
+  profilePic: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#457b9d',
+    marginRight: 20,
+  },
+  friendInfo: {
+    flex: 1,
   },
   friendName: {
     fontSize: 18,
+    fontWeight: '600',
     color: '#333',
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   followButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#457b9d',
   },
   follow: {
     backgroundColor: '#457b9d',
   },
   unfollowButton: {
     backgroundColor: '#e63946',
+  },
+  chatButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    backgroundColor: '#1d3557',
   },
   buttonText: {
     color: '#fff',

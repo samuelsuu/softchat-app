@@ -4,159 +4,49 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  Button,
-  Alert,
   SafeAreaView,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons"; // Using icon library
+import { MaterialIcons } from "@expo/vector-icons";
 import Post from "../components/Post";
-import { supabase } from "../api/supabaseClient"; // Import supabase client
+import posts from "../dummyData/Posts"; // Import the posts data
 
 const HomeScreen = ({ navigation }) => {
-  const [username, setUsername] = useState(""); // State for username
-  const [points, setPoints] = useState(100); // Replace with actual points from your backend or state
   const [notifications] = useState(3); // Example notification count
-  const [modalVisible, setModalVisible] = useState(false);
-  const [amount, setAmount] = useState("");
   const [newPostContent, setNewPostContent] = useState(""); // State for new post content
-  const [posts, setPosts] = useState([]); // State for posts
   const [loading, setLoading] = useState(false); // Loading state
+  const [postList, setPostList] = useState([]); // State for posts
 
-  
-  // Fetch the logged-in user's username
+  // Load the posts when the component mounts
   useEffect(() => {
-    const fetchUsername = async () => {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
-
-      if (sessionError) {
-        Alert.alert("Error fetching session:", sessionError.message);
-        return;
-      }
-
-      const user = sessionData?.session?.user;
-
-      // Log the session data to ensure user is being retrieved
-      console.log("Session Data: ", sessionData);
-
-      if (user) {
-        const { data, error } = await supabase
-          .from("profiles") // Ensure this matches your table name
-          .select("username")
-          .eq("id", user.id) // Ensure user.id matches the profile's id
-          .single();
-
-        if (error) {
-          Alert.alert("Error fetching username:", error.message);
-        } else {
-          console.log("Fetched Username Data: ", data); // Log the data to check the structure
-          setUsername(data?.username || "user"); // Set username only if data is available
-        }
-      }
-    };
-
-    fetchUsername();
-  }, []);
-
-  // Fetch all posts from the Supabase database
-  const fetchPosts = async () => {
     setLoading(true);
-
-    // Join the posts table with profiles to get the username
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        `
-        id,
-        content,
-        created_at,
-        profiles (
-          username
-        )
-      `
-      )
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      Alert.alert("Error fetching posts:", error.message);
-    } else {
-      setPosts(data);
-    }
+    setPostList(posts);
     setLoading(false);
-  };
-
-  // Fetch posts on component mount
-  useEffect(() => {
-    fetchPosts();
   }, []);
 
-  // Handle new post submission
-  const handleNewPostSubmit = async () => {
+  // Handle new post submission with dummy logic
+  const handleNewPostSubmit = () => {
     if (!newPostContent.trim()) {
       Alert.alert("Please enter some content before posting.");
       return;
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData?.session?.user;
-
-    if (!user) {
-      Alert.alert("You must be logged in to post.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("posts")
-      .insert([{ user_id: user.id, content: newPostContent, username }]);
-
-    if (error) {
-      Alert.alert("Error submitting post:", error.message);
-    } else {
-      Alert.alert("Post submitted successfully!");
-      setNewPostContent(""); // Clear the input field
-      fetchPosts(); // Re-fetch posts to include the new one
-    }
+    // Add new post to the list of posts
+    const newPost = {
+      id: (postList.length + 1).toString(),
+      content: newPostContent,
+      created_at: new Date().toISOString(),
+      user: posts[postList.length % posts.length].user, // Assign a user from existing posts
+    };
+    setPostList([newPost, ...postList]);
+    setNewPostContent(""); // Clear the input field
+    Alert.alert("Post submitted successfully!");
   };
 
-  // Handle deposit
-  const handleDeposit = () => {
-    const pointsToDeposit = parseInt(amount);
-    if (isNaN(pointsToDeposit) || pointsToDeposit <= 0) {
-      Alert.alert("Invalid amount", "Please enter a valid amount to deposit.");
-      return;
-    }
-    setPoints((prevPoints) => prevPoints + pointsToDeposit);
-    Alert.alert(
-      `You have deposited ${pointsToDeposit} points! Your new balance is ${
-        points + pointsToDeposit
-      }.`
-    );
-    setModalVisible(false);
-    setAmount("");
-  };
-
-  // Handle withdraw
-  const handleWithdraw = () => {
-    const pointsToWithdraw = parseInt(amount);
-    if (
-      isNaN(pointsToWithdraw) ||
-      pointsToWithdraw <= 0 ||
-      pointsToWithdraw > points
-    ) {
-      Alert.alert("Invalid amount", "Please enter a valid amount to withdraw.");
-      return;
-    }
-    setPoints((prevPoints) => prevPoints - pointsToWithdraw);
-    Alert.alert(
-      `You have withdrawn ${pointsToWithdraw} points! Your new balance is ${
-        points - pointsToWithdraw
-      }.`
-    );
-    setModalVisible(false);
-    setAmount("");
-  };
+  // Extract username and points from the first post's user (for example purposes)
+  const { username, points } = posts[0]?.user || { username: "Guest User", points: 0 };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -178,36 +68,32 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Points Actions */}
-      <View style={styles.buttonContainer}>
-        <Button title="Deposit Points" onPress={handleDeposit} />
-        <Button title="Withdraw Points" onPress={handleWithdraw} />
-      </View>
-
-      {/* New Post Section */}
-      {/* <View style={styles.newPostContainer}>
+      {/* New Post Input */}
+      <View style={styles.newPostContainer}>
         <TextInput
           style={styles.newPostInput}
           placeholder="What's on your mind?"
           value={newPostContent}
           onChangeText={setNewPostContent}
         />
-        <Button title="Post" onPress={handleNewPostSubmit} />
-      </View> */}
+        <TouchableOpacity onPress={handleNewPostSubmit}>
+          <Text style={styles.postButton}>Post</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Post List */}
       <FlatList
-        data={posts}
+        data={postList}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Post
-            user={item.profiles?.username}
+            user={item.user.username}
             content={item.content}
-            image={item.image_url} // Make sure image_url is valid
+            image={item.image} // Pass the image URL to the Post component
           />
         )}
         refreshing={loading}
-        onRefresh={fetchPosts} // Pull to refresh
+        onRefresh={() => {}}
       />
     </SafeAreaView>
   );
@@ -232,11 +118,6 @@ const styles = StyleSheet.create({
   welcomeTextContainer: { flexDirection: "column" },
   welcomeText: { fontSize: 18, fontWeight: "bold", color: "#fff" },
   pointsText: { fontSize: 16, color: "#fff", marginVertical: 5 },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
   notificationIcon: { position: "relative", paddingRight: 10 },
   notificationBadge: {
     position: "absolute",
@@ -261,6 +142,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginRight: 10,
   },
+  postButton: { color: "#457b9d", fontWeight: "bold" },
 });
 
 export default HomeScreen;
