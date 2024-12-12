@@ -23,6 +23,8 @@ const friends = [
     email: "mike.williams@example.com",
     password: "password123",
     profilePic: "https://gratisography.com/wp-content/uploads/2023/06/gratisography-strange-world-free-stock-photo-800x525.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 4,
@@ -39,6 +41,8 @@ const friends = [
     email: "david.brown@example.com",
     password: "password123",
     profilePic: "https://example.com/images/david.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 6,
@@ -46,6 +50,8 @@ const friends = [
     email: "sophia.white@example.com",
     password: "password123",
     profilePic: "https://example.com/images/sophia.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 7,
@@ -53,6 +59,8 @@ const friends = [
     email: "chris.green@example.com",
     password: "password123",
     profilePic: "https://example.com/images/chris.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 8,
@@ -60,6 +68,8 @@ const friends = [
     email: "sam@example.com",
     password: "password123",
     profilePic: "https://example.com/images/chris.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 9,
@@ -67,6 +77,8 @@ const friends = [
     email: "olivia.black@example.com",
     password: "password123",
     profilePic: "https://example.com/images/olivia.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 10,
@@ -74,6 +86,8 @@ const friends = [
     email: "daniel.gray@example.com",
     password: "password123",
     profilePic: "https://example.com/images/daniel.jpg",
+    isFollowing: false,
+    points: 1200,
   },
   {
     id: 11,
@@ -81,6 +95,8 @@ const friends = [
     email: "ava.silver@example.com",
     password: "password123",
     profilePic: "https://example.com/images/ava.jpg",
+    isFollowing: false,
+    points: 1200,
   },
 ];
 

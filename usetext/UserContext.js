@@ -1,19 +1,24 @@
-// context/UserContext.js
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
+// Create the context
 const UserContext = createContext();
 
+// Create a custom hook for easier access to the context
 export const useUser = () => useContext(UserContext);
 
+// Create a provider component
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState({
-    id: 1, // User's ID, you can modify this based on actual user login data
-    username: 'john_doe',
-    profilePic: 'https://example.com/john.jpg',
-    email: 'john.doe@example.com',
-    points: 1200,
-    isFollowing: false,
-  });
+  const [user, setUser] = useState(null);
+
+  // Simulating a user being logged in (replace with your login logic)
+  React.useEffect(() => {
+    // Replace this with actual user fetching logic
+    const loggedInUser = {
+      id: 1, // Ensure this ID matches one in your `friends` data
+      username: "john_doe",
+    };
+    setUser(loggedInUser);
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

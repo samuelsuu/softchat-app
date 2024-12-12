@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Button } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Image, FlatList, Button, ActivityIndicator } from 'react-native';
 import { useUser } from '../usetext/UserContext'; // Import the UserContext
 import friends from '../dummyData/Friends'; // Import the friends data
 import posts from '../dummyData/Posts'; // Import the posts data
@@ -8,8 +8,27 @@ const ProfileScreen = () => {
   // Get the logged-in user from context
   const { user } = useUser();
 
+  // If user is not loaded yet, show a loading spinner
+  if (!user) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading user data...</Text>
+      </View>
+    );
+  }
+
   // Find the user's corresponding data from the friends list
   const currentUser = friends.find((friend) => friend.id === user.id);
+
+  // If no matching user data, show an error message
+  if (!currentUser) {
+    return (
+      <View style={styles.centered}>
+        <Text>User not found in friends data.</Text>
+      </View>
+    );
+  }
 
   // Filter posts for the logged-in user
   const userPosts = posts.filter((post) => post.user.id === user.id);
@@ -35,7 +54,7 @@ const ProfileScreen = () => {
         <View style={styles.statsContainer}>
           <Text style={styles.statsText}>Points: {currentUser.points}</Text>
           <Text style={styles.statsText}>
-            Following: {currentUser.isFollowing ? "Yes" : "No"}
+            Following: {currentUser.isFollowing ? 'Yes' : 'No'}
           </Text>
         </View>
         <Button title="Follow" onPress={() => { /* Handle follow logic */ }} />
@@ -56,6 +75,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
+    paddingTop: 50,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileContainer: {
     alignItems: 'center',
